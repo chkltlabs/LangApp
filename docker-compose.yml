@@ -1,0 +1,52 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "8000:8000"
+    environment:
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://host.docker.internal:11434}
+      STT_URL: ${STT_URL:-http://stt:8000}
+      TTS_URL: ${TTS_URL:-http://tts:8000}
+      DATABASE_URL: sqlite:////data/langapp.db
+      LANG_TARGET: ${LANG_TARGET:-Spanish}
+      LANG_UI: ${LANG_UI:-English}
+      CEFR_LEVEL: ${CEFR_LEVEL:-A2}
+      TTS_VOICE_TARGET: ${TTS_VOICE_TARGET:-es_ES-davefx-medium}
+      TTS_VOICE_UI: ${TTS_VOICE_UI:-en_US-lessac-medium}
+      LLM_MODEL: ${LLM_MODEL:-qwen2.5:14b}
+      LLM_MODEL_FAST: ${LLM_MODEL_FAST:-}
+      LLM_MODEL_STRONG: ${LLM_MODEL_STRONG:-}
+      API_KEY: ${API_KEY:-}
+    volumes:
+      - langapp_data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      stt:
+        condition: service_started
+      tts:
+        condition: service_started
+    restart: unless-stopped
+
+  stt:
+    build:
+      context: ./services/stt
+    environment:
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+    volumes:
+      - whisper_cache:/root/.cache/huggingface
+    restart: unless-stopped
+
+  tts:
+    build:
+      context: ./services/tts
+    volumes:
+      - piper_voices:/voices
+    restart: unless-stopped
+
+volumes:
+  langapp_data:
+  whisper_cache:
+  piper_voices:
