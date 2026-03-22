@@ -7,7 +7,12 @@ from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
 from app.deps import require_api_key
-from app.services.ollama import ollama_chat_complete, ollama_chat_stream, tutor_system_prompt
+from app.services.ollama import (
+    ollama_chat_complete,
+    ollama_chat_stream,
+    resolve_model,
+    tutor_system_prompt,
+)
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -23,14 +28,6 @@ class ChatRequest(BaseModel):
         default=None,
         description="fast | strong | default — maps to env LLM_MODEL_*",
     )
-
-
-def resolve_model(settings: Settings, tier: str | None) -> str:
-    if tier == "fast" and settings.llm_model_fast:
-        return settings.llm_model_fast
-    if tier == "strong" and settings.llm_model_strong:
-        return settings.llm_model_strong
-    return settings.llm_model
 
 
 @router.post("/stream")

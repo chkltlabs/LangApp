@@ -1,25 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
-import { apiJson, playWavBase64, voiceTurn } from "../api";
+import { useCallback, useState } from "react";
+import { playWavBase64, voiceTurn } from "../api";
 import { AudioRecorder } from "../components/AudioRecorder";
+import { TargetLangText } from "../components/TargetLangText";
+import { usePublicSettings } from "../context/SettingsContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-type PublicSettings = {
-  lang_target: string;
-  tts_voice_target: string;
-};
-
 export function VoicePage() {
-  const [settings, setSettings] = useState<PublicSettings | null>(null);
+  const settings = usePublicSettings();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [tier, setTier] = useState<string>("fast");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [lastLog, setLastLog] = useState<string | null>(null);
-
-  useEffect(() => {
-    void apiJson<PublicSettings>("/api/settings/public").then(setSettings).catch(() => {});
-  }, []);
 
   const onBlob = useCallback(
     async (blob: Blob) => {
@@ -79,7 +72,8 @@ export function VoicePage() {
       >
         {messages.map((m, i) => (
           <div key={i} style={{ marginBottom: "0.5rem", whiteSpace: "pre-wrap" }}>
-            <strong>{m.role === "user" ? "You" : "Tutor"}:</strong> {m.content}
+            <strong>{m.role === "user" ? "You" : "Tutor"}:</strong>{" "}
+            <TargetLangText text={m.content} sentenceContext={m.content} />
           </div>
         ))}
       </div>

@@ -37,6 +37,7 @@ class CardOut(BaseModel):
     front: str
     back: str
     hint: str | None
+    intro_complete: bool
     due_at: datetime
     interval_days: float
     repetitions: int
@@ -51,6 +52,7 @@ class CardCreate(BaseModel):
     hint: str | None = None
     deck_id: int | None = None
     source: str | None = None
+    intro_complete: bool | None = None
 
 
 class ReviewBody(BaseModel):
@@ -104,12 +106,14 @@ def create_card(
         deck_id = deck.id
     else:
         deck_id = _default_deck(db).id
+    intro = True if body.intro_complete is None else body.intro_complete
     c = Card(
         deck_id=deck_id,
         front=body.front,
         back=body.back,
         hint=body.hint,
         source=body.source,
+        intro_complete=intro,
         due_at=datetime.utcnow(),
     )
     db.add(c)
@@ -128,10 +132,53 @@ def due_cards(
     q = (
         db.query(Card)
         .filter(Card.due_at <= now)
+        .filter(Card.intro_complete.is_(True))
         .order_by(Card.due_at)
         .limit(min(limit, 100))
     )
     return q.all()
+
+
+@router.get("/learn", response_model=list[CardOut])
+def learn_queue(
+    limit: int = 30,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_api_key),
+):
+    return (
+        db.query(Card)
+        .filter(Card.intro_complete.is_(False))
+        .order_by(Card.id)
+        .limit(min(limit, 100))
+        .all()
+    )
+
+
+@router.post("/cards/{card_id}/complete-intro", response_model=CardOut)
+def complete_intro(
+    card_id: int,
+    db: Session = Depends(get_db),
+    _: None = Depends(require_api_key),
+):
+    c = db.query(Card).filter(Card.id == card_id).first()
+    if not c:
+        raise HTTPException(404, "Card not found")
+    if c.intro_complete:
+        return c
+    reps, ef, interval, due = schedule_review(
+        4,
+        repetitions=c.repetitions,
+        ease_factor=c.ease_factor,
+        interval_days=c.interval_days,
+    )
+    c.intro_complete = True
+    c.repetitions = reps
+    c.ease_factor = ef
+    c.interval_days = interval
+    c.due_at = due
+    db.commit()
+    db.refresh(c)
+    return c
 
 
 @router.post("/cards/{card_id}/review", response_model=CardOut)

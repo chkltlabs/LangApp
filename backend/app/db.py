@@ -10,6 +10,13 @@ _engine = None
 _SessionLocal = None
 
 
+def reset_engine() -> None:
+    """Clear global engine/session (used by tests to swap DATABASE_URL)."""
+    global _engine, _SessionLocal
+    _engine = None
+    _SessionLocal = None
+
+
 def init_engine():
     global _engine, _SessionLocal
     if _engine is None:
@@ -37,11 +44,25 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+def _migrate_schema(engine):
+    from sqlalchemy import inspect, text
+
+    insp = inspect(engine)
+    if "cards" in insp.get_table_names():
+        cols = {c["name"] for c in insp.get_columns("cards")}
+        if "intro_complete" not in cols:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE cards ADD COLUMN intro_complete BOOLEAN NOT NULL DEFAULT 1")
+                )
+
+
 def init_db():
     from app import models  # noqa: F401
 
     init_engine()
     Base.metadata.create_all(bind=_engine)
+    _migrate_schema(_engine)
     SessionLocal = get_session_local()
     db = SessionLocal()
     try:

@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     lang_target: str = "Spanish"
     lang_ui: str = "English"
     cefr_level: str = "A2"
+    # BCP 47 locale for Intl.Segmenter (e.g. es-ES). If unset, derived from tts_voice_target.
+    lang_target_locale: str | None = None
 
     llm_model: str = "qwen2.5:14b"
     llm_model_fast: str | None = None
@@ -24,6 +26,16 @@ class Settings(BaseSettings):
     # Piper voice keys (must exist in TTS container /voices)
     tts_voice_target: str = "es_ES-davefx-medium"
     tts_voice_ui: str = "en_US-lessac-medium"
+
+
+def target_locale_from_settings(settings: Settings) -> str:
+    if settings.lang_target_locale and settings.lang_target_locale.strip():
+        return settings.lang_target_locale.strip()
+    prefix = settings.tts_voice_target.split("-", 1)[0].strip()
+    if "_" in prefix:
+        lang, region = prefix.split("_", 1)
+        return f"{lang}-{region.upper()}"
+    return prefix or "en"
 
 
 @lru_cache

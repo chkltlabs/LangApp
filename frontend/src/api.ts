@@ -83,6 +83,58 @@ export async function voiceTurn(
   return res.json();
 }
 
+export type GlossResponse = {
+  glosses: string[];
+  pos?: string | null;
+  note?: string | null;
+  from_deck?: boolean;
+};
+
+export async function fetchGloss(surface: string, sentence?: string): Promise<GlossResponse> {
+  return apiJson<GlossResponse>("/api/lexicon/gloss", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ surface, sentence: sentence?.trim() || null }),
+  });
+}
+
+export async function generateVocabPack(body: {
+  theme?: string | null;
+  count: number;
+  model_tier?: string | null;
+  replace_existing?: boolean;
+}): Promise<{ created: number; card_ids: number[] }> {
+  return apiJson("/api/vocab/generate-pack", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function fetchVocabMcq(cardId: number): Promise<{
+  prompt_l2: string;
+  options: string[];
+  correct_index: number;
+}> {
+  return apiJson("/api/vocab/quiz/multiple-choice", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ card_id: cardId }),
+  });
+}
+
+export async function gradeVocabProduction(cardId: number, attempt: string): Promise<{ ok: boolean; feedback: string }> {
+  return apiJson("/api/vocab/grade-production", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ card_id: cardId, attempt }),
+  });
+}
+
+export async function completeCardIntro(cardId: number): Promise<unknown> {
+  return apiJson(`/api/srs/cards/${cardId}/complete-intro`, { method: "POST" });
+}
+
 export function playWavBase64(b64: string): void {
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);

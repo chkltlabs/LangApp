@@ -1,0 +1,34 @@
+---
+description: Require automated tests and ≥80% line coverage for new backend and frontend code
+globs: backend/**/*.py,frontend/**/*.ts,frontend/**/*.tsx
+alwaysApply: false
+---
+
+# Test coverage (80%) — all languages in this repo
+
+When you **add or materially change** production code, you must ship **automated tests** and satisfy **≥80% line coverage** for that work. This applies to **every language** used here (currently **Python** in `backend/`, **TypeScript / TSX** in `frontend/`).
+
+## Shared expectations
+
+1. **Tests live next to the stack**: add or extend tests under `backend/tests/` for Python and under `frontend/` using the project’s JS test layout (e.g. `*.test.ts`, `*.test.tsx`, or `src/__tests__/`) once configured.
+2. **Gate before “done”**: the change is incomplete until coverage for the affected package meets **≥80% line coverage** via the commands below (or stricter if CI already enforces more).
+3. If the **repo baseline** is still below 80%, **new or heavily touched modules/files** you introduce must still reach **≥80% line coverage** for those paths (narrow `--cov` / Vitest `include` to prove it).
+
+## Backend (Python)
+
+- Use **pytest**; for FastAPI use **TestClient** or **httpx.AsyncClient**; unit-test pure logic without the network where possible.
+- Measure with **pytest-cov**, e.g. from `backend/`:  
+  `PYTHONPATH=. pytest tests -v --cov=app --cov-report=term-missing --cov-fail-under=80`
+- Dev deps: `pytest`, `pytest-asyncio` (if needed), `pytest-cov` (e.g. `requirements-dev.txt`).
+
+## Frontend (TypeScript / React)
+
+- Use **Vitest** (or the project’s chosen runner) with **@vitest/coverage-v8** (or equivalent) aligned with Vite.
+- Enforce **≥80%** via config, e.g. in `vitest.config.ts`: `coverage.thresholds.lines` (and branches/statements as appropriate) at **80**, with `coverage.include` scoped to `src/`.
+- Test components and hooks with **React Testing Library**; mock `fetch` / API helpers, not the whole UI tree unless necessary.
+
+## Anti-patterns
+
+- Shipping new features **without** tests in the same change set.
+- Lowering global thresholds to greenwash a PR.
+- Mocks that bypass the real code under test (coverage must reflect executed production code).
