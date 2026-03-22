@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { authHeaders } from "../api";
 import { AudioRecorder } from "../components/AudioRecorder";
+import { TargetLangText } from "../components/TargetLangText";
 
 export function PronouncePage() {
   const [mode, setMode] = useState<"target" | "shadow">("target");
@@ -75,7 +76,12 @@ export function PronouncePage() {
           <h3>Feedback</h3>
           <p style={{ whiteSpace: "pre-wrap" }}>{String(result.feedback ?? "")}</p>
           <h4>Transcript</h4>
-          <p>{String(result.transcript ?? "")}</p>
+          <p style={{ whiteSpace: "pre-wrap" }}>
+            <TargetLangText
+              text={String(result.transcript ?? "")}
+              sentenceContext={String(result.transcript ?? "")}
+            />
+          </p>
           <h4>Alignment ratio</h4>
           <p>{JSON.stringify((result.alignment as { ratio?: number })?.ratio)}</p>
         </div>

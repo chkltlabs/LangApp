@@ -5,4 +5,7 @@ __pycache__/
 scratch*.*
 frontend/node_modules/
 frontend/dist/
+frontend/coverage/
+coverage-combined/
 *.db
+backend/coverage-cobertura.xml

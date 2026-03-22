@@ -1,13 +1,12 @@
 import base64
 import json
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
 from app.deps import require_api_key
-from app.services.ollama import ollama_chat_complete, tutor_system_prompt
+from app.services.ollama import ollama_chat_complete, resolve_model, tutor_system_prompt
 from app.services.speech import synthesize_speech, transcribe_audio
 
 router = APIRouter(prefix="/api/speech", tags=["speech"])
@@ -54,14 +53,6 @@ class VoiceChatRequest(BaseModel):
     model_tier: str | None = None
 
 
-def _resolve_model(settings: Settings, tier: str | None) -> str:
-    if tier == "fast" and settings.llm_model_fast:
-        return settings.llm_model_fast
-    if tier == "strong" and settings.llm_model_strong:
-        return settings.llm_model_strong
-    return settings.llm_model
-
-
 @router.post("/voice-turn")
 async def voice_turn(
     file: UploadFile = File(...),
@@ -94,7 +85,7 @@ async def voice_turn(
             ollama_messages.append({"role": m["role"], "content": str(m["content"])})
     ollama_messages.append({"role": "user", "content": user_text})
 
-    model = _resolve_model(settings, model_tier)
+    model = resolve_model(settings, model_tier)
     reply = await ollama_chat_complete(settings, ollama_messages, model=model)
     reply = (reply or "").strip()
 

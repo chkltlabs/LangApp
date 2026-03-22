@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 
 from app.db import init_db
-from app.routers import chat, exercises, pronunciation, speech, srs
+from app.routers import chat, exercises, lexicon, pronunciation, speech, srs, vocab
 
 # In Docker, WORKDIR is /app with packages under /app/app/ and Vite output at /app/static (see Dockerfile.app).
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
@@ -37,9 +37,12 @@ app.add_middleware(
 app.include_router(chat.router)
 app.include_router(speech.router)
 app.include_router(srs.router)
+app.include_router(lexicon.router)
+app.include_router(vocab.router)
 app.include_router(exercises.router)
 app.include_router(pronunciation.router)
 
+# Phased roadmap (product plan): graded-reader endpoint, guided session flow, FSRS-style scheduler.
 
 @app.get("/api/health")
 def api_health():
@@ -48,12 +51,13 @@ def api_health():
 
 @app.get("/api/settings/public")
 def public_settings():
-    from app.config import get_settings
+    from app.config import get_settings, target_locale_from_settings
 
     s = get_settings()
     return {
         "lang_target": s.lang_target,
         "lang_ui": s.lang_ui,
+        "lang_target_locale": target_locale_from_settings(s),
         "cefr_level": s.cefr_level,
         "tts_voice_target": s.tts_voice_target,
         "tts_voice_ui": s.tts_voice_ui,
@@ -63,5 +67,5 @@ def public_settings():
     }
 
 
-if STATIC_DIR.is_dir() and (STATIC_DIR / "index.html").is_file():
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="spa")
+if STATIC_DIR.is_dir() and (STATIC_DIR / "index.html").is_file():  # pragma: no cover
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="spa")  # pragma: no cover

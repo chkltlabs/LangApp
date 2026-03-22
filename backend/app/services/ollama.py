@@ -6,6 +6,14 @@ import httpx
 from app.config import Settings
 
 
+def resolve_model(settings: Settings, tier: str | None) -> str:
+    if tier == "fast" and settings.llm_model_fast:
+        return settings.llm_model_fast
+    if tier == "strong" and settings.llm_model_strong:
+        return settings.llm_model_strong
+    return settings.llm_model
+
+
 async def ollama_chat_complete(
     settings: Settings,
     messages: list[dict[str, str]],
@@ -64,6 +72,45 @@ def tutor_system_prompt(settings: Settings) -> str:
         "When introducing new words, gloss them briefly in the comfort language. "
         "Stay in character for role-play tasks. "
         "Do not produce harmful content."
+    )
+
+
+def gloss_system_prompt(settings: Settings) -> str:
+    return (
+        f"You are a compact bilingual lexicon. Target language: {settings.lang_target}. "
+        f"Glosses and notes must be in {settings.lang_ui}. "
+        'Reply with JSON only: {"glosses": string[] (1-4 short translation senses), '
+        '"pos": string|null (part of speech abbreviation), "note": string|null (usage hint)}. '
+        "If the token is not in the target language or is a name, set glosses to []. "
+        "Do not produce harmful content."
+    )
+
+
+def gloss_user_message(surface: str, sentence: str | None) -> str:
+    payload = {"surface": surface.strip(), "sentence": (sentence or "").strip()[:400] or None}
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def vocab_pack_system_prompt(settings: Settings) -> str:
+    return (
+        f"You generate vocabulary for learners of {settings.lang_target}. "
+        f"Glosses and hints must be in {settings.lang_ui}. "
+        f"CEFR level: {settings.cefr_level}. "
+        "Return JSON only: an array of objects, each with keys "
+        "lemma (string in target language), gloss_native (string), "
+        "example_l2 (one short natural sentence in target language using the lemma), "
+        "hint_native (optional short memory clue in comfort language). "
+        "No duplicates. High-frequency, practical items. "
+        "Do not produce harmful content."
+    )
+
+
+def vocab_pack_user_message(theme: str | None, count: int) -> str:
+    t = theme.strip() if theme else ""
+    scope = f'Theme: "{t}".' if t else "General high-frequency survival vocabulary."
+    return json.dumps(
+        {"instructions": scope, "count": count},
+        ensure_ascii=False,
     )
 
 

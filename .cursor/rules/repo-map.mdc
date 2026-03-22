@@ -1,0 +1,12 @@
+---
+description: Read REPO_MAP.md at repo root before navigating or editing the codebase
+alwaysApply: true
+---
+
+# Repository map (required reading)
+
+1. **Before** exploring, planning, or editing this repository, read **[REPO_MAP.md](REPO_MAP.md)** at the **repository root**. Use it to choose the correct package (`backend/app`, `frontend/src`, `services/*`), routers, and runtime boundaries (Docker, Ollama, STT/TTS, SQLite).
+
+2. Prefer **targeted file opens** and edits aligned with the map (e.g. new API in `backend/app/routers/`, UI in `frontend/src/pages/`) instead of broad blind search.
+
+3. If you **change** top-level layout, add services, or move major modules, **update `REPO_MAP.md` in the same change** so the map stays trustworthy.

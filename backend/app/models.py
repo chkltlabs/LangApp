@@ -27,6 +27,8 @@ class Card(Base):
     back: Mapped[str] = mapped_column(Text, nullable=False)
     hint: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     source: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    # False = still in interactive "Learn" queue; True = eligible for SRS due queue.
+    intro_complete: Mapped[bool] = mapped_column(Boolean, default=True)
 
     due_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     interval_days: Mapped[float] = mapped_column(Float, default=0.0)
@@ -36,6 +38,15 @@ class Card(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     deck: Mapped["Deck"] = relationship("Deck", back_populates="cards")
+
+
+class GlossCache(Base):
+    __tablename__ = "gloss_cache"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    cache_key: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    response_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class ConversationTurn(Base):

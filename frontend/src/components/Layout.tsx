@@ -1,4 +1,5 @@
 import { Link, Outlet } from "react-router-dom";
+import { SettingsProvider } from "../context/SettingsContext";
 
 const nav = [
   ["/", "Chat"],
@@ -10,6 +11,7 @@ const nav = [
 
 export function Layout() {
   return (
+    <SettingsProvider>
     <div style={{ display: "flex", minHeight: "100vh" }}>
       <aside
         style={{
@@ -32,5 +34,6 @@ export function Layout() {
         <Outlet />
       </main>
     </div>
+    </SettingsProvider>
   );
 }

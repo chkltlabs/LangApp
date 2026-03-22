@@ -1,24 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { apiJson, playWavBase64, streamChat } from "../api";
+import { TargetLangText } from "../components/TargetLangText";
+import { usePublicSettings } from "../context/SettingsContext";
 
 type Msg = { role: "user" | "assistant"; content: string };
 
-type PublicSettings = {
-  lang_target: string;
-  tts_voice_target: string;
-};
-
 export function ChatPage() {
-  const [settings, setSettings] = useState<PublicSettings | null>(null);
+  const settings = usePublicSettings();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [tier, setTier] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    void apiJson<PublicSettings>("/api/settings/public").then(setSettings).catch(() => {});
-  }, []);
 
   const send = useCallback(async () => {
     const t = input.trim();
@@ -64,7 +57,8 @@ export function ChatPage() {
       <h2>Chat</h2>
       {settings && (
         <p style={{ color: "#9aa3b5", fontSize: "0.9rem" }}>
-          Target: {settings.lang_target} — TTS uses <code>{settings.tts_voice_target}</code>
+          Target: {settings.lang_target} — UI: {settings.lang_ui} — TTS uses{" "}
+          <code>{settings.tts_voice_target}</code>
         </p>
       )}
       <div style={{ marginBottom: "0.75rem", display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
@@ -95,7 +89,8 @@ export function ChatPage() {
       >
         {messages.map((m, i) => (
           <div key={i} style={{ marginBottom: "0.6rem", whiteSpace: "pre-wrap" }}>
-            <strong>{m.role === "user" ? "You" : "Tutor"}:</strong> {m.content}
+            <strong>{m.role === "user" ? "You" : "Tutor"}:</strong>{" "}
+            <TargetLangText text={m.content} sentenceContext={m.content} />
           </div>
         ))}
       </div>
